@@ -1,0 +1,68 @@
+name: run-tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8, 7.4]
+        laravel: [8.*, 7.*, 6.*]
+        include:
+          - laravel: 8.*
+            testbench: 6.*
+          - laravel: 7.*
+            testbench: 5.*
+          - laravel: 6.*
+            testbench: 4.*
+
+    name: PHP ${{ matrix.php }} Laravel ${{ matrix.laravel }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-laravel-${{ matrix.laravel }}-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            dependencies-laravel-${{ matrix.laravel }}-php-${{ matrix.php }}-composer-
+            dependencies-laravel-${{ matrix.laravel }}-php-
+            dependencies-laravel-
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: libxml
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer require "illuminate/support:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer install
+
+      - name: Execute tests
+        run: composer test
+
+      - name: Upload coverage
+        env:
+          COVERAGE_KEY: ${{ secrets.COVERAGE_KEY }}
+          COVERAGE_HOST: ${{ secrets.COVERAGE_HOST }}
+        run: |
+          RESPONSE=$(curl -sS -w '%{http_code}' -X POST -F "file=@coverage.clover" -H "Authorization: Bearer $COVERAGE_KEY" "$COVERAGE_HOST/$GITHUB_REPOSITORY/${GITHUB_REF#refs/heads/}")
+          if [[ "$RESPONSE" = 204 ]]; then
+              echo "Great Success"
+          else
+              echo "ERROR: server returned $RESPONSE"
+              exit 1
+          fi

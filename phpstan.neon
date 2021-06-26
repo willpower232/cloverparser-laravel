@@ -1,0 +1,7 @@
+includes:
+  - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+  ignoreErrors:
+    - '#Class Laravel\\Lumen\\Application not found.#'
+    - '#Call to method configure\(\) on an unknown class Laravel\\Lumen\\Application.#'
