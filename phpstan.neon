@@ -1,6 +1,3 @@
-includes:
-  - ./vendor/nunomaduro/larastan/extension.neon
-
 parameters:
   ignoreErrors:
     - '#Class Laravel\\Lumen\\Application not found.#'
