@@ -68,7 +68,7 @@ class CloverParserTest extends TestCase
         <coverage generated="1618905787">
             <project timestamp="1618905787">
                 <metrics files="0" loc="0" ncloc="0" classes="0" methods="0"
-                coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0"
+                coveredmethods="0" conditionals="450" coveredconditionals="900" statements="0"
                 coveredstatements="0" elements="450" coveredelements="900"/>
             </project>
         </coverage>
@@ -78,6 +78,8 @@ class CloverParserTest extends TestCase
 
         $parser->addFile($path)
             ->calculateTotals();
+
+        $this->assertTrue($parser->getPercentage() > 100);
 
         $svg = $parser->getSVG();
 
